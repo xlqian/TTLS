@@ -153,7 +153,7 @@ class AStar(object):
         # begin search
         while True:
             if i % 200 == 0:
-                callback(g, orig, dest, self._edges_status, self._edge_labels, a)
+                callback(g, orig, dest, self._edges_status, self._edge_labels, str(a).zfill(4))
                 a += 1
             i += 1
 

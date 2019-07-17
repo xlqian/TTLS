@@ -274,7 +274,7 @@ class DoubleAstar(object):
                 callback(g, orig, dest,
                          self._edges_status_forward, self._edge_labels_forward,
                          self._edges_status_backward, self._edge_labels_backward,
-                         i)
+                         str(i).zfill(4))
                 i += 1
             a += 1
 

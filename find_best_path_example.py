@@ -17,15 +17,12 @@ end = time.time()
 print(end - start)
 osmnx.plot_graph_route(G, route, node_size=0)
 
-
+# Example of using call_back
+from call_backs import double_astar_call_back
 print('start double A*!')
 start = time.time()
 double_star = DoubleAstar(cost_factor=1)
-route = double_star.get_best_path(G, orig_node, dest_node)
+route = double_star.get_best_path(G, orig_node, dest_node, double_astar_call_back)
 end = time.time()
 print(end - start)
 osmnx.plot_graph_route(G, route, node_size=0)
-
-
-
-
