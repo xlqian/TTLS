@@ -1,6 +1,7 @@
 from enum import Enum
 
 from dataclasses import dataclass, field
+from typing import Tuple
 
 NodeId = int
 EdgeLabelIdx = int
@@ -13,13 +14,14 @@ class EdgeId(object):
 
     the order of start, node doesn't matter: EdgeId(1, 2) == EdgeId(2, 1)
     """
-    start: NodeId
-    end: NodeId
+    start: NodeId = field(hash=False, compare=False)
+    end: NodeId = field(hash=False, compare=False)
+    key: Tuple[NodeId, NodeId] = field(hash=True, compare=True)
 
     def __init__(self, start, end):
-        object.__setattr__(self, 'start', min(start, end))
-        object.__setattr__(self, 'end', max(start, end))
-
+        object.__setattr__(self, 'start', start)
+        object.__setattr__(self, 'end', end)
+        object.__setattr__(self, 'key', (min(start, end), max(start, end)))
 
 @dataclass(order=True)
 class Cost(object):

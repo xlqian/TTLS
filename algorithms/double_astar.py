@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Tuple
 from collections import defaultdict
 import networkx as nx
 import weakref
@@ -34,7 +34,6 @@ class DoubleAstar(object):
     _speed: float = 1.4
     _threshold: float = float('inf')
 
-
     def __init__(self, speed=1.4, cost_factor=1.0):
         self._speed = speed
         self._cost_factor = cost_factor
@@ -60,15 +59,16 @@ class DoubleAstar(object):
     def _get_edge_status_backward(self, edge_id: EdgeId) -> EdgeStatus:
         return self._get_edge_status_impl(self._edges_status_backward, edge_id)
 
-    def init_forward(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId):
+    def init_forward(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId, init_secs: float = 0, init_cost: float = 0):
         for end_node in g.adj[orig]:
             edge = g.adj[orig][end_node][0]
 
-            secs = edge['length'] / self._speed
-            sort_cost = edge['length'] + self._get_heuristic_cost(g, end_node, dest)
+            secs = edge['length'] / self._speed + init_secs
+            cost = edge['length']
+            sort_cost = cost + self._get_heuristic_cost(g, end_node, dest) + init_cost
 
             idx = len(self._edge_labels_forward)
-            self._edge_labels_forward.append(EdgeLabel(Cost(sort_cost, secs),
+            self._edge_labels_forward.append(EdgeLabel(Cost(cost, secs),
                                                        sort_cost,
                                                        EdgeId(orig, end_node),
                                                        -1,
@@ -78,15 +78,16 @@ class DoubleAstar(object):
             self._adjacency_list_forward.insert(sort_cost, idx)
             self._edges_status_forward[EdgeId(orig, end_node)] = EdgeStatus(idx).set_temporary()
 
-    def init_backward(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId):
+    def init_backward(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId, init_secs: float = 0, init_cost: float = 0):
         for end_node in g.adj[dest]:
             edge = g.adj[dest][end_node][0]
 
-            secs = edge['length'] / self._speed
-            sort_cost = edge['length'] + self._get_heuristic_cost(g, end_node, orig)
+            secs = edge['length'] / self._speed + init_secs
+            cost = edge['length']
+            sort_cost = cost + self._get_heuristic_cost(g, end_node, orig) + init_cost
 
             idx = len(self._edge_labels_backward)
-            self._edge_labels_backward.append(EdgeLabel(Cost(sort_cost, secs),
+            self._edge_labels_backward.append(EdgeLabel(Cost(cost, secs),
                                                         sort_cost,
                                                         EdgeId(dest, end_node),
                                                         -1,
@@ -96,7 +97,7 @@ class DoubleAstar(object):
             self._adjacency_list_backward.insert(sort_cost, idx)
             self._edges_status_backward[EdgeId(dest, end_node)] = EdgeStatus(idx).set_temporary()
 
-    def init(self, g, orig: NodeId, dest: NodeId):
+    def init(self):
         self._edge_labels_forward = []
         self._edge_labels_backward = []
 
@@ -105,9 +106,6 @@ class DoubleAstar(object):
 
         self._edges_status_forward.clear()
         self._edges_status_backward.clear()
-
-        self.init_forward(g, orig, dest)
-        self.init_backward(g, orig, dest)
 
         self._best_path = BestConnection(EdgeId(-1, -1),
                                          EdgeId(-1, -1),
@@ -128,7 +126,7 @@ class DoubleAstar(object):
             + self._edge_labels_forward[pred_idx_forward].cost
 
         if c.cost < self._best_path.cost:
-            self._best_path = BestConnection(pred,
+            self._best_path = BestConnection(self._edge_labels_forward[pred_idx_forward].edge_id,
                                              self._edge_labels_backward[edge_label_backward].edge_id,
                                              c.cost)
 
@@ -146,7 +144,7 @@ class DoubleAstar(object):
             + self._edge_labels_forward[edge_label_forward].cost
 
         if c.cost < self._best_path.cost:
-            self._best_path = BestConnection(pred,
+            self._best_path = BestConnection(self._edge_labels_forward[edge_label_forward].edge_id,
                                              self._edge_labels_backward[pred_idx_backward].edge_id,
                                              c.cost)
 
@@ -224,40 +222,39 @@ class DoubleAstar(object):
             self._edges_status_backward[edge_id] = EdgeStatus(idx).set_temporary()
             self._adjacency_list_backward.insert(sort_cost, idx)
 
-    def make_osm_path(self, orig: NodeId, dest: NodeId):
+    def make_osm_path(self):
         res_forward = []
         edge = self._best_path.forward
         edge_label_idx = self._edges_status_forward[edge].edge_label_index
         edge_label = self._edge_labels_forward[edge_label_idx]
+        forward_secs = edge_label.cost.secs
         while not edge_label.is_origin:
             edge_label_idx = edge_label.pred_idx
             edge_label = self._edge_labels_forward[edge_label_idx]
             res_forward.append(edge_label.end_node)
 
-        res_forward.append(orig)
+        res_forward.append(edge_label.edge_id.start)
         res_forward = res_forward[::-1]
 
         res_backward = []
-        res_backward.append(next(iter({self._best_path.forward.start,
-                                       self._best_path.forward.end}.intersection({self._best_path.backward.start,
-                                                                                  self._best_path.backward.end}))))
+
         edge = self._best_path.backward
         edge_label_idx = self._edges_status_backward[edge].edge_label_index
         edge_label = self._edge_labels_backward[edge_label_idx]
+        backward_secs = edge_label.cost.secs
+
+        res_backward.append(edge.end)
+
         while not edge_label.is_destination:
             edge_label_idx = edge_label.pred_idx
             edge_label = self._edge_labels_backward[edge_label_idx]
             res_backward.append(edge_label.end_node)
 
-        res_backward.append(dest)
+        res_backward.append(edge_label.edge_id.start)
         res_forward.extend(res_backward)
-        return res_forward
+        return res_forward, forward_secs + backward_secs
 
-    def get_best_path(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId,
-                      callback: Callable = lambda *args, **kwargs: None) -> List[NodeId]:
-
-        self.init(g, orig, dest)
-
+    def run(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId, callback: Callable = lambda *args, **kwargs: None) -> Tuple[List[NodeId], float]:
         expand_forward = True
         expand_backward = True
 
@@ -270,7 +267,7 @@ class DoubleAstar(object):
         i = 0
         while True:
 
-            if a % 15 == 0:
+            if a % 1 == 0:
                 callback(g, orig, dest,
                          self._edges_status_forward, self._edge_labels_forward,
                          self._edges_status_backward, self._edge_labels_backward,
@@ -284,7 +281,7 @@ class DoubleAstar(object):
 
                 # We don't want the expansion to go forever
                 if forward_edge_label.sort_cost > self._threshold:
-                    return self.make_osm_path(orig, dest)
+                    return self.make_osm_path()
 
                 if self._edges_status_backward[forward_edge_label.edge_id].is_permanent():
                     if self._threshold == float('inf'):
@@ -298,7 +295,7 @@ class DoubleAstar(object):
 
                 # We don't want the expansion to go forever
                 if backward_edge_label.sort_cost > self._threshold:
-                    return self.make_osm_path(orig, dest)
+                    return self.make_osm_path()
 
                 if self._edges_status_forward[backward_edge_label.edge_id].is_permanent():
                     if self._threshold == float('inf'):
@@ -319,3 +316,12 @@ class DoubleAstar(object):
 
                 self._edges_status_backward[backward_edge_label.edge_id].set_permanent()
                 self.expand_backward(g, backward_edge_label.end_node, backward_edge_label_idx, orig)
+
+    def get_best_path(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId,
+                      callback: Callable = lambda *args, **kwargs: None) -> Tuple[List[NodeId], float]:
+        self.init()
+
+        self.init_forward(g, orig, dest)
+        self.init_backward(g, orig, dest)
+
+        return self.run(g, orig, dest, callback)

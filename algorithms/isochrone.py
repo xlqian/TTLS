@@ -1,4 +1,4 @@
-from typing import Set, Callable
+from typing import Set, Callable, List, Dict
 
 import networkx as nx
 
@@ -13,7 +13,7 @@ class Isocrhone(AStar):
         super().__init__(speed, cost_factor)
 
     def get_isochrone(self, g: nx.MultiDiGraph, orig: NodeId, dest_nodes: Set[NodeId], limit=900,
-                      callback: Callable=lambda *args, **kwargs: None):
+                      callback: Callable=lambda *args, **kwargs: None) -> Dict[NodeId, float]:
         self._orig = orig
         self._dest = None
         self._cost_factor = 0
@@ -47,7 +47,7 @@ class Isocrhone(AStar):
             current_labels = len(self._edge_labels)
 
             if current_labels > PriorityQueue.QUEUE_MAX_SIZE:
-                return []
+                return {}
 
             if len(self._adjacency_list) == 0:
                 return res
@@ -59,10 +59,12 @@ class Isocrhone(AStar):
             if pred_edge_label.cost.secs > limit:
                 continue
 
-            if pred_edge_label.edge_id.start in dest_nodes:
-                res[pred_edge_label.edge_id.start] = pred_edge_label.cost.secs
-            elif pred_edge_label.edge_id.end in dest_nodes:
-                res[pred_edge_label.edge_id.end] = pred_edge_label.cost.secs
+            if pred_edge_label.edge_id.end in dest_nodes:
+                r = res.get(pred_edge_label.edge_id.end)
+                if r is not None:
+                    res[pred_edge_label.edge_id.end] = min(r, pred_edge_label.cost.secs)
+                else:
+                    res[pred_edge_label.edge_id.end] = pred_edge_label.cost.secs
 
             if not pred_edge_label.is_origin:
                 self._edges_status[pred_edge_label.edge_id].set_permanent()

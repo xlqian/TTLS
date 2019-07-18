@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Tuple
 from collections import defaultdict
 import networkx as nx
 import weakref
@@ -14,17 +14,18 @@ class BestPath(object):
     edge_label_index: EdgeLabelIdx
     cost: Cost
 
+
 @dataclass
 class AStar(object):
     _edge_labels: List[EdgeLabel]
     _destinations: Dict[EdgeId, Cost]
     _adjacency_list: PriorityQueue
     _edges_status: Dict[EdgeId, EdgeStatus]
-    _orig: NodeId
-    _dest: NodeId
-    _cost_factor: float
-    _best_path: BestPath
-    _speed: float
+    _orig: NodeId = -1
+    _dest: NodeId = - 1
+    _cost_factor: float = 1
+    _best_path: BestPath = BestPath(-1, Cost(0, 0))
+    _speed: float = 1.4
 
     def init(self):
         self._edge_labels = []
@@ -70,10 +71,6 @@ class AStar(object):
 
             d = self._destinations.get(edge_id)
             if d:
-                for e in g.adj[dest]:
-                    if edge_id == EdgeId(dest, e):
-                        new_cost.cost += g.adj[dest][e][0]['length']
-
                 if self._best_path.edge_label_index is -1 or new_cost < self._best_path.cost:
                     self._best_path.edge_label_index = edge_status.edge_label_index if edge_status.is_temporary() \
                                                                               else len(self._edge_labels)
@@ -115,12 +112,16 @@ class AStar(object):
             edge_label = self._edge_labels[edge_label_idx]
             res.append(edge_label.end_node)
 
-        res.append(self._orig)
-        res = res[::-1]
-        return res
+        res.append(edge_label.edge_id.start)
 
-    def get_best_path(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId, callback: Callable=lambda *args, **kwargs: None) -> List[
-        NodeId]:
+        res = res[::-1]
+        return res, self._best_path.cost.secs
+
+    def get_best_path(self,
+                      g: nx.MultiDiGraph,
+                      orig: NodeId,
+                      dest: NodeId,
+                      callback: Callable=lambda *args, **kwargs: None) -> Tuple[List[NodeId], float]:
 
         self._orig = orig
         self._dest = dest
@@ -160,7 +161,7 @@ class AStar(object):
             current_labels = len(self._edge_labels)
 
             if current_labels > PriorityQueue.QUEUE_MAX_SIZE:
-                return []
+                return [], -1.
 
             _, pred_index = self._adjacency_list.pop()
             pred_edge_label = self._edge_labels[pred_index]
@@ -168,11 +169,13 @@ class AStar(object):
             # Do we touch the destination?
             d = self._destinations.get(pred_edge_label.edge_id)
             if d:
+                if self._best_path.edge_label_index is -1:
+                    self._best_path.edge_label_index = pred_index
+                    self._best_path.cost = pred_edge_label.cost
+
                 return self.make_osm_path()
 
             if not pred_edge_label.is_origin:
                 self._edges_status[pred_edge_label.edge_id].set_permanent()
-
-
 
             self.expand_forward(g, pred_edge_label.end_node, pred_index, dest)
