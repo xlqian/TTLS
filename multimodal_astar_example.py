@@ -1,7 +1,7 @@
 import osmnx
 import time
 
-from algorithms.multimodal_star import MultiModalAStart
+from algorithms.multimodal_astar import MultiModalAStart
 from algorithms.utils import project_nodes
 from bss_locations_example import bss_locations
 
