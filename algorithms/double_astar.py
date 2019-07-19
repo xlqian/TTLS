@@ -267,7 +267,7 @@ class DoubleAstar(object):
         i = 0
         while True:
 
-            if a % 1 == 0:
+            if a % 15 == 0:
                 callback(g, orig, dest,
                          self._edges_status_forward, self._edge_labels_forward,
                          self._edges_status_backward, self._edge_labels_backward,

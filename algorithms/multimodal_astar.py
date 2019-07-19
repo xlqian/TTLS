@@ -36,10 +36,10 @@ class MultiModalAStart(object):
             return []
 
         for node, secs in forward_isochrone.items():
-            self._double_astar.init_forward(g, node, dest, secs, secs * BIKE_SPEED)
+            self._double_astar.init_forward(g, node, dest, secs, secs * WALKING_SPEED)
 
         for node, secs in backward_isochrone.items():
-            self._double_astar.init_backward(g, orig, node, secs, secs * BIKE_SPEED)
+            self._double_astar.init_backward(g, orig, node, secs, secs * WALKING_SPEED)
 
         bss_route, bike_secs = self._double_astar.run(g, orig, dest)
 
