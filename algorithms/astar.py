@@ -23,7 +23,7 @@ class AStar(object):
     _edges_status: Dict[EdgeId, EdgeStatus]
     _orig: NodeId = -1
     _dest: NodeId = - 1
-    _cost_factor: float = 1
+    _cost_factor: float = 0.4
     _best_path: BestPath = BestPath(-1, Cost(0, 0))
     _speed: float = 1.4
 
@@ -34,7 +34,7 @@ class AStar(object):
         self._edges_status = defaultdict(EdgeStatus)
         self._best_path = BestPath(-1, Cost(0, 0))
 
-    def __init__(self, speed=1.4, cost_factor=1.0):
+    def __init__(self, speed=1.4, cost_factor=0.4):
         self.init()
         self._speed = speed
         self._cost_factor = cost_factor
@@ -67,10 +67,14 @@ class AStar(object):
             pred = self._edge_labels[pred_idx]
 
             new_cost = pred.cost + Cost(edge['length'], edge['length'] / self._speed)
+
+            new_cost.init_cost = pred.cost.init_cost
+            new_cost.init_secs = pred.cost.init_secs
+
             edge_id = EdgeId(node, end_node)
 
             d = self._destinations.get(edge_id)
-            if d:
+            if d is not None:
                 if self._best_path.edge_label_index is -1 or new_cost < self._best_path.cost:
                     self._best_path.edge_label_index = edge_status.edge_label_index if edge_status.is_temporary() \
                                                                               else len(self._edge_labels)
@@ -117,6 +121,24 @@ class AStar(object):
         res = res[::-1]
         return res, self._best_path.cost.secs
 
+    def init_origin(self, g, orig, init_secs=0, init_cost=0):
+
+        # init origin
+        for end_node in g.adj[orig]:
+            edge = g.adj[orig][end_node][0]
+
+            secs = edge['length'] / self._speed + init_secs
+            sort_cost = edge['length'] + self._get_heuristic_cost(g, end_node, self._dest) + init_cost
+
+            idx = len(self._edge_labels)
+            self._edge_labels.append(EdgeLabel(Cost(sort_cost, secs, init_cost, init_secs),
+                                               sort_cost,
+                                               EdgeId(orig, end_node),
+                                               -1,
+                                               end_node,
+                                               True))
+            self._adjacency_list.insert(sort_cost, idx)
+
     def get_best_path(self,
                       g: nx.MultiDiGraph,
                       orig: NodeId,
@@ -128,21 +150,7 @@ class AStar(object):
 
         self.init()
 
-        # init origin
-        for end_node in g.adj[orig]:
-            edge = g.adj[orig][end_node][0]
-
-            secs = edge['length'] / self._speed
-            sort_cost = edge['length'] + self._get_heuristic_cost(g, end_node, self._dest)
-
-            idx = len(self._edge_labels)
-            self._edge_labels.append(EdgeLabel(Cost(sort_cost, secs),
-                                               sort_cost,
-                                               EdgeId(orig, end_node),
-                                               -1,
-                                               end_node,
-                                               True))
-            self._adjacency_list.insert(sort_cost, idx)
+        self.init_origin(g, orig)
 
         # init destination
         for end_node in g.adj[dest]:

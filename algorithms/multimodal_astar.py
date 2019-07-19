@@ -29,17 +29,17 @@ class MultiModalAStart(object):
         Tuple[Tuple[List[NodeId], List[NodeId], List[NodeId]], Tuple[float, float, float]]:
 
         self.init()
-        forward_isochrone = self._foward_isocrhone.get_isochrone(g, orig, bss_nodes, limit=600)
-        backward_isochrone = self._backward_isocrhone.get_isochrone(g, dest, bss_nodes, limit=600)
+        forward_isochrone = self._foward_isocrhone.get_isochrone(g, orig, bss_nodes, limit=900)
+        backward_isochrone = self._backward_isocrhone.get_isochrone(g, dest, bss_nodes, limit=900)
 
         if not forward_isochrone or not backward_isochrone:
             return []
 
-        for node, secs in forward_isochrone.items():
-            self._double_astar.init_forward(g, node, dest, secs, secs * WALKING_SPEED)
+        for node, cost in forward_isochrone.items():
+            self._double_astar.init_forward(g, node, dest, 0, cost.secs * BIKE_SPEED)
 
-        for node, secs in backward_isochrone.items():
-            self._double_astar.init_backward(g, orig, node, secs, secs * WALKING_SPEED)
+        for node, cost in backward_isochrone.items():
+            self._double_astar.init_backward(g, orig, node, 0, cost.secs * BIKE_SPEED)
 
         bss_route, bike_secs = self._double_astar.run(g, orig, dest)
 

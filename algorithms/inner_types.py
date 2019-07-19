@@ -26,7 +26,12 @@ class EdgeId(object):
 @dataclass(order=True)
 class Cost(object):
     cost: float = field(compare=True)
-    secs: int = field(compare=False)
+    secs: float = field(compare=False)
+
+    # used in multimodal ischrone
+    init_cost: float = field(compare=False, default=0)
+    # used in multimodal ischrone
+    init_secs: float = field(compare=False, default=0)
 
     def __add__(self, other):
         return Cost(self.cost + other.cost, self.secs + other.secs)

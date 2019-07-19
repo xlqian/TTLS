@@ -27,7 +27,7 @@ class DoubleAstar(object):
     _edges_status_forward: Dict[EdgeId, EdgeStatus] = defaultdict(EdgeStatus)
     _edges_status_backward: Dict[EdgeId, EdgeStatus] = defaultdict(EdgeStatus)
 
-    _cost_factor: float = 1
+    _cost_factor: float = 1.
     _best_path: BestConnection = BestConnection(EdgeId(-1, -1),
                                                 EdgeId(-1, -1),
                                                 float('inf'))
@@ -68,7 +68,7 @@ class DoubleAstar(object):
             sort_cost = cost + self._get_heuristic_cost(g, end_node, dest) + init_cost
 
             idx = len(self._edge_labels_forward)
-            self._edge_labels_forward.append(EdgeLabel(Cost(cost, secs),
+            self._edge_labels_forward.append(EdgeLabel(Cost(cost, secs, init_secs, init_cost),
                                                        sort_cost,
                                                        EdgeId(orig, end_node),
                                                        -1,
@@ -265,6 +265,10 @@ class DoubleAstar(object):
 
         a = 0
         i = 0
+        
+        # in order to balance the research in both directions
+        diff = None 
+
         while True:
 
             if a % 15 == 0:
@@ -303,18 +307,25 @@ class DoubleAstar(object):
 
                     self.set_backward_connection(backward_edge_label.edge_id)
 
-            if forward_edge_label.sort_cost < backward_edge_label.sort_cost:
+            if diff is None:
+                diff = forward_edge_label.sort_cost - backward_edge_label.sort_cost
+
+            if forward_edge_label.sort_cost < backward_edge_label.sort_cost + diff:
                 expand_forward = True
                 expand_backward = False
 
-                self._edges_status_forward[forward_edge_label.edge_id].set_permanent()
+                if not forward_edge_label.is_origin:
+                    self._edges_status_forward[forward_edge_label.edge_id].set_permanent()
+
                 self.expand_forward(g, forward_edge_label.end_node, forward_edge_label_idx, dest)
 
             else:
                 expand_forward = False
                 expand_backward = True
 
-                self._edges_status_backward[backward_edge_label.edge_id].set_permanent()
+                if not backward_edge_label.is_destination:
+                    self._edges_status_backward[backward_edge_label.edge_id].set_permanent()
+
                 self.expand_backward(g, backward_edge_label.end_node, backward_edge_label_idx, orig)
 
     def get_best_path(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId,
