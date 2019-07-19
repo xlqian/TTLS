@@ -18,7 +18,7 @@ bss_nodes = project_nodes(G, bss_locations)
 print('start double A*!')
 start = time.time()
 multimodal_astar = MultiModalAStart()
-(f, bss, b), (f_secs, bss_secs, b_secs) = multimodal_astar.get_best_path(G, orig_node, dest_node, bss_nodes)
+(f, bss, b), secs = multimodal_astar.get_best_path(G, orig_node, dest_node, bss_nodes)
 end = time.time()
 
 print(end - start)
