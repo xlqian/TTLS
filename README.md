@@ -21,3 +21,12 @@ The frame, at the very beginning, in which you find some blue cloud points repre
 The two isochrones in the following frames represent the searching of BSS for both departure and arrival points.
  
 Then a double A* is launch by taking the results of isochrone as its initial condition.   
+
+**Multimodal Isochrone**  
+![Multimodal Isochrone](example_images/multimodal_isochrone.gif?raw=true "Multimodal Isochrone A*")  
+
+Explanation:
+
+The multimodal Isochrone is actually composed of three isochrones.
+
+

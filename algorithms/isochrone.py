@@ -28,7 +28,7 @@ class Isocrhone(AStar):
 
         # begin search
         while True:
-            if i % 15 == 0:
+            if i % 200 == 0:
                 callback(g, orig, dest_nodes, self._edges_status, self._edge_labels, str(a).zfill(4))
                 a += 1
             i += 1

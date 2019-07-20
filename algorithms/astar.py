@@ -138,6 +138,7 @@ class AStar(object):
                                                end_node,
                                                True))
             self._adjacency_list.insert(sort_cost, idx)
+            self._edges_status[EdgeId(orig, end_node)] = EdgeStatus(idx).set_temporary()
 
     def get_best_path(self,
                       g: nx.MultiDiGraph,

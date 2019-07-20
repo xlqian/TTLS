@@ -1,9 +1,8 @@
-from typing import Set, Callable, Dict, List
+from typing import Set, Callable, Dict
 import networkx as nx
 
 from algorithms.isochrone import Isocrhone
-from algorithms.inner_types import NodeId, EdgeLabel, Cost, EdgeId
-from priority_queue import PriorityQueue
+from algorithms.inner_types import NodeId, Cost
 
 WALKING_SPEED = 1.4
 BIKE_SPEED = 3.3
@@ -26,7 +25,7 @@ class MultiModalIsochrone(object):
                       orig: NodeId,
                       dest_nodes: Set[NodeId],
                       walking_time_limit: int = 900,
-                      bike_time_limit: int = 2400,
+                      bike_time_limit: int = 1200,
                       callback: Callable=lambda *args, **kwargs: None) -> Dict[NodeId, Cost]:
 
         first_res = self._first_isochrone.get_isochrone(g, orig, self._bss_nodes, limit=walking_time_limit)
