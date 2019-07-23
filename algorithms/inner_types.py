@@ -34,7 +34,10 @@ class Cost(object):
     init_secs: float = field(compare=False, default=0)
 
     def __add__(self, other):
-        return Cost(self.cost + other.cost, self.secs + other.secs)
+        return Cost(self.cost + other.cost,
+                    self.secs + other.secs,
+                    self.init_cost,
+                    self.init_secs)
 
 
 @dataclass

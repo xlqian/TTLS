@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Callable, Tuple
 from collections import defaultdict
 import networkx as nx
@@ -7,7 +7,7 @@ from priority_queue import PriorityQueue
 from algorithms import utils
 from algorithms.inner_types import NodeId, EdgeId, Cost, EdgeLabel, EdgeStatus, EdgeLabelIdx
 
-kThresholdDelta = 20.
+kThresholdDelta = 200.
 
 
 @dataclass
@@ -18,8 +18,8 @@ class BestConnection:
 
 
 class DoubleAstar(object):
-    _edge_labels_forward: List[EdgeLabel] = []
-    _edge_labels_backward: List[EdgeLabel] = []
+    _edge_labels_forward: List[EdgeLabel] = field(default_factory=list)
+    _edge_labels_backward: List[EdgeLabel] = field(default_factory=list)
 
     _adjacency_list_forward: PriorityQueue = PriorityQueue()
     _adjacency_list_backward: PriorityQueue = PriorityQueue()
@@ -27,14 +27,14 @@ class DoubleAstar(object):
     _edges_status_forward: Dict[EdgeId, EdgeStatus] = defaultdict(EdgeStatus)
     _edges_status_backward: Dict[EdgeId, EdgeStatus] = defaultdict(EdgeStatus)
 
-    _cost_factor: float = 1.
+    _cost_factor: float = .5
     _best_path: BestConnection = BestConnection(EdgeId(-1, -1),
                                                 EdgeId(-1, -1),
                                                 float('inf'))
     _speed: float = 1.4
     _threshold: float = float('inf')
 
-    def __init__(self, speed=1.4, cost_factor=1.0):
+    def __init__(self, speed=1.4, cost_factor=0.5):
         self._speed = speed
         self._cost_factor = cost_factor
 
@@ -68,7 +68,7 @@ class DoubleAstar(object):
             sort_cost = cost + self._get_heuristic_cost(g, end_node, dest) + init_cost
 
             idx = len(self._edge_labels_forward)
-            self._edge_labels_forward.append(EdgeLabel(Cost(cost, secs, init_secs, init_cost),
+            self._edge_labels_forward.append(EdgeLabel(Cost(cost, secs, init_cost, init_secs),
                                                        sort_cost,
                                                        EdgeId(orig, end_node),
                                                        -1,
@@ -87,7 +87,7 @@ class DoubleAstar(object):
             sort_cost = cost + self._get_heuristic_cost(g, end_node, orig) + init_cost
 
             idx = len(self._edge_labels_backward)
-            self._edge_labels_backward.append(EdgeLabel(Cost(cost, secs),
+            self._edge_labels_backward.append(EdgeLabel(Cost(cost, secs, init_cost, init_secs),
                                                         sort_cost,
                                                         EdgeId(dest, end_node),
                                                         -1,
@@ -162,7 +162,7 @@ class DoubleAstar(object):
             new_cost = pred.cost + Cost(edge['length'], edge['length'] / self._speed)
             edge_id = EdgeId(node, end_node)
 
-            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, dest)
+            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, dest) + pred.cost.init_cost
 
             # the edge has been visited
             if edge_status.is_temporary():
@@ -199,7 +199,7 @@ class DoubleAstar(object):
             new_cost = pred.cost + Cost(edge['length'], edge['length'] / self._speed)
             edge_id = EdgeId(node, end_node)
 
-            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, origin)
+            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, origin) + pred.cost.init_cost
 
             # the edge has been visited
             if edge_status.is_temporary():
@@ -284,7 +284,7 @@ class DoubleAstar(object):
                 forward_edge_label = self._edge_labels_forward[forward_edge_label_idx]
 
                 # We don't want the expansion to go forever
-                if forward_edge_label.sort_cost > self._threshold:
+                if forward_edge_label.sort_cost + (diff if diff is not None else 0) > self._threshold:
                     return self.make_osm_path()
 
                 if self._edges_status_backward[forward_edge_label.edge_id].is_permanent():
@@ -310,7 +310,7 @@ class DoubleAstar(object):
             if diff is None:
                 diff = forward_edge_label.sort_cost - backward_edge_label.sort_cost
 
-            if forward_edge_label.sort_cost < backward_edge_label.sort_cost + diff:
+            if forward_edge_label.sort_cost <= backward_edge_label.sort_cost + diff:
                 expand_forward = True
                 expand_backward = False
 

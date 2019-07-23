@@ -68,9 +68,6 @@ class AStar(object):
 
             new_cost = pred.cost + Cost(edge['length'], edge['length'] / self._speed)
 
-            new_cost.init_cost = pred.cost.init_cost
-            new_cost.init_secs = pred.cost.init_secs
-
             edge_id = EdgeId(node, end_node)
 
             d = self._destinations.get(edge_id)
@@ -80,7 +77,7 @@ class AStar(object):
                                                                               else len(self._edge_labels)
                     self._best_path.cost = new_cost
 
-            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, self._dest)
+            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, self._dest) + pred.cost.init_cost
 
             # the edge has been visited
             if edge_status.is_temporary():
@@ -128,10 +125,11 @@ class AStar(object):
             edge = g.adj[orig][end_node][0]
 
             secs = edge['length'] / self._speed + init_secs
-            sort_cost = edge['length'] + self._get_heuristic_cost(g, end_node, self._dest) + init_cost
+            cost = edge['length']
+            sort_cost = cost + self._get_heuristic_cost(g, end_node, self._dest) + init_cost
 
             idx = len(self._edge_labels)
-            self._edge_labels.append(EdgeLabel(Cost(sort_cost, secs, init_cost, init_secs),
+            self._edge_labels.append(EdgeLabel(Cost(cost, secs, init_cost, init_secs),
                                                sort_cost,
                                                EdgeId(orig, end_node),
                                                -1,
