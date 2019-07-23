@@ -24,7 +24,7 @@ class MultiModalIsochrone(object):
                       g: nx.MultiDiGraph,
                       orig: NodeId,
                       dest_nodes: Set[NodeId],
-                      walking_time_limit: int = 300,
+                      walking_time_limit: int = 900,
                       bike_time_limit: int = 1800,
                       callback: Callable=lambda *args, **kwargs: None) -> Dict[NodeId, Cost]:
 
@@ -34,7 +34,7 @@ class MultiModalIsochrone(object):
 
         print(first_res.get(25207327))
         second_res = self._second_isochrone.run(g, orig, self._bss_nodes - set(first_res.keys()), limit=bike_time_limit)
-        print(second_res.get(36473759))
+        print(second_res.get(708253753))
 
         for node, cost in second_res.items():
             self._third_isochrone.init_origin(g, node, cost.secs, cost.init_cost + (cost.secs - cost.init_secs) * WALKING_SPEED)

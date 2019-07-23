@@ -64,8 +64,8 @@ class DoubleAstar(object):
             edge = g.adj[orig][end_node][0]
 
             secs = edge['length'] / self._speed + init_secs
-            cost = edge['length']
-            sort_cost = cost + self._get_heuristic_cost(g, end_node, dest) + init_cost
+            cost = edge['length'] + init_cost
+            sort_cost = cost + self._get_heuristic_cost(g, end_node, dest)
 
             idx = len(self._edge_labels_forward)
             self._edge_labels_forward.append(EdgeLabel(Cost(cost, secs, init_cost, init_secs),
@@ -83,8 +83,8 @@ class DoubleAstar(object):
             edge = g.adj[dest][end_node][0]
 
             secs = edge['length'] / self._speed + init_secs
-            cost = edge['length']
-            sort_cost = cost + self._get_heuristic_cost(g, end_node, orig) + init_cost
+            cost = edge['length'] + init_cost
+            sort_cost = cost + self._get_heuristic_cost(g, end_node, orig)
 
             idx = len(self._edge_labels_backward)
             self._edge_labels_backward.append(EdgeLabel(Cost(cost, secs, init_cost, init_secs),
@@ -162,7 +162,7 @@ class DoubleAstar(object):
             new_cost = pred.cost + Cost(edge['length'], edge['length'] / self._speed)
             edge_id = EdgeId(node, end_node)
 
-            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, dest) + pred.cost.init_cost
+            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, dest)
 
             # the edge has been visited
             if edge_status.is_temporary():
@@ -199,7 +199,7 @@ class DoubleAstar(object):
             new_cost = pred.cost + Cost(edge['length'], edge['length'] / self._speed)
             edge_id = EdgeId(node, end_node)
 
-            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, origin) + pred.cost.init_cost
+            sort_cost = new_cost.cost + self._get_heuristic_cost(g, end_node, origin)
 
             # the edge has been visited
             if edge_status.is_temporary():
