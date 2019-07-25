@@ -50,11 +50,11 @@ class Isocrhone(AStar):
 
             # Do we touch the destination?
             if pred_edge_label.end_node in dest_nodes:
-                r = res.get(pred_edge_label.edge_id.end)
+                r = res.get(pred_edge_label.end_node)
                 if r is not None:
-                    res[pred_edge_label.edge_id.end] = min(r, pred_edge_label.cost)
+                    res[pred_edge_label.end_node] = min(r, pred_edge_label.cost)
                 else:
-                    res[pred_edge_label.edge_id.end] = pred_edge_label.cost
+                    res[pred_edge_label.end_node] = pred_edge_label.cost
 
             if not pred_edge_label.is_origin:
                 self._edges_status[pred_edge_label.edge_id].set_permanent()
