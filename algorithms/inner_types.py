@@ -23,6 +23,7 @@ class EdgeId(object):
         object.__setattr__(self, 'end', end)
         object.__setattr__(self, 'key', (min(start, end), max(start, end)))
 
+
 @dataclass(order=True)
 class Cost(object):
     cost: float = field(compare=True)

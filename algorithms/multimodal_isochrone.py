@@ -32,9 +32,7 @@ class MultiModalIsochrone(object):
         for node, cost in first_res.items():
             self._second_isochrone.init_origin(g, node, cost.secs, cost.secs * BIKE_SPEED)
 
-        print(first_res.get(25207327))
-        second_res = self._second_isochrone.run(g, orig, self._bss_nodes - set(first_res.keys()), limit=bike_time_limit)
-        print(second_res.get(708253753))
+        second_res = self._second_isochrone.run(g, orig, self._bss_nodes, limit=bike_time_limit)
 
         for node, cost in second_res.items():
             self._third_isochrone.init_origin(g, node, cost.secs, cost.init_cost + (cost.secs - cost.init_secs) * WALKING_SPEED)

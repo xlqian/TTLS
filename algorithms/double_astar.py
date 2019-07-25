@@ -167,12 +167,23 @@ class DoubleAstar(object):
             # the edge has been visited
             if edge_status.is_temporary():
                 lab = weakref.proxy(self._edge_labels_forward[edge_status.edge_label_index])
-                if new_cost < lab.cost:
-                    self._adjacency_list_forward.insert(new_key=sort_cost,
-                                                        item=edge_status.edge_label_index)
-                    lab.pred_idx = pred_idx
-                    lab.end_node = end_node
-                    lab.cost = new_cost
+                if lab.end_node == end_node:
+                    if new_cost < lab.cost:
+                        self._adjacency_list_forward.insert(new_key=sort_cost,
+                                                            item=edge_status.edge_label_index)
+                        lab.pred_idx = pred_idx
+                        lab.end_node = end_node
+                        lab.cost = new_cost
+
+                # Hmmm, we are visiting the edge in the opposing direction of last visit
+                elif lab.end_node == node:
+                    if new_cost.cost < (lab.cost.cost - edge['length']):
+                        self._adjacency_list_forward.insert(new_key=sort_cost,
+                                                            item=edge_status.edge_label_index)
+                        lab.edge_id = EdgeId(node, end_node)
+                        lab.pred_idx = pred_idx
+                        lab.end_node = end_node
+                        lab.cost = new_cost
                 continue
 
             idx = len(self._edge_labels_forward)
@@ -204,12 +215,23 @@ class DoubleAstar(object):
             # the edge has been visited
             if edge_status.is_temporary():
                 lab = weakref.proxy(self._edge_labels_backward[edge_status.edge_label_index])
-                if new_cost < lab.cost:
-                    self._adjacency_list_backward.insert(new_key=sort_cost,
-                                                         item=edge_status.edge_label_index)
-                    lab.pred_idx = pred_idx
-                    lab.end_node = end_node
-                    lab.cost = new_cost
+                if lab.end_node == end_node:
+                    if new_cost < lab.cost:
+                        self._adjacency_list_backward.insert(new_key=sort_cost,
+                                                             item=edge_status.edge_label_index)
+                        lab.pred_idx = pred_idx
+                        lab.end_node = end_node
+                        lab.cost = new_cost
+
+                # Hmmm, we are visiting the edge in the opposing direction of last visit
+                elif lab.end_node == node:
+                    if new_cost.cost < (lab.cost.cost - edge['length']):
+                        self._adjacency_list_backward.insert(new_key=sort_cost,
+                                                             item=edge_status.edge_label_index)
+                        lab.edge_id = EdgeId(node, end_node)
+                        lab.pred_idx = pred_idx
+                        lab.end_node = end_node
+                        lab.cost = new_cost
                 continue
 
             idx = len(self._edge_labels_backward)
@@ -229,10 +251,11 @@ class DoubleAstar(object):
         edge_label = self._edge_labels_forward[edge_label_idx]
         forward_secs = edge_label.cost.secs
         while not edge_label.is_origin:
+            res_forward.append(edge_label.end_node)
             edge_label_idx = edge_label.pred_idx
             edge_label = self._edge_labels_forward[edge_label_idx]
-            res_forward.append(edge_label.end_node)
 
+        res_forward.append(edge_label.edge_id.end)
         res_forward.append(edge_label.edge_id.start)
         res_forward = res_forward[::-1]
 
@@ -243,16 +266,18 @@ class DoubleAstar(object):
         edge_label = self._edge_labels_backward[edge_label_idx]
         backward_secs = edge_label.cost.secs
 
-        res_backward.append(edge.end)
-
         while not edge_label.is_destination:
+            res_backward.append(edge_label.end_node)
             edge_label_idx = edge_label.pred_idx
             edge_label = self._edge_labels_backward[edge_label_idx]
-            res_backward.append(edge_label.end_node)
 
+        res_backward.append(edge_label.edge_id.end)
         res_backward.append(edge_label.edge_id.start)
-        res_forward.extend(res_backward)
-        return res_forward, forward_secs + backward_secs
+
+        if res_forward[-1] == res_backward[0]:
+            res_forward.pop(-1)
+
+        return res_forward + res_backward, forward_secs + backward_secs
 
     def run(self, g: nx.MultiDiGraph, orig: NodeId, dest: NodeId, callback: Callable = lambda *args, **kwargs: None) -> Tuple[List[NodeId], float]:
         expand_forward = True
@@ -284,7 +309,7 @@ class DoubleAstar(object):
                 forward_edge_label = self._edge_labels_forward[forward_edge_label_idx]
 
                 # We don't want the expansion to go forever
-                if forward_edge_label.sort_cost + (diff if diff is not None else 0) > self._threshold:
+                if forward_edge_label.sort_cost - (diff if diff is not None else 0) > self._threshold:
                     return self.make_osm_path()
 
                 if self._edges_status_backward[forward_edge_label.edge_id].is_permanent():

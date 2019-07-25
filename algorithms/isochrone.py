@@ -36,6 +36,7 @@ class Isocrhone(AStar):
             current_labels = len(self._edge_labels)
 
             if current_labels > PriorityQueue.QUEUE_MAX_SIZE:
+                print('Warning: current_labels > PriorityQueue.QUEUE_MAX_SIZE')
                 return res
 
             if len(self._adjacency_list) == 0:
@@ -48,7 +49,7 @@ class Isocrhone(AStar):
                 continue
 
             # Do we touch the destination?
-            if pred_edge_label.edge_id.end in dest_nodes:
+            if pred_edge_label.end_node in dest_nodes:
                 r = res.get(pred_edge_label.edge_id.end)
                 if r is not None:
                     res[pred_edge_label.edge_id.end] = min(r, pred_edge_label.cost)

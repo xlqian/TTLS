@@ -82,12 +82,35 @@ class AStar(object):
             # the edge has been visited
             if edge_status.is_temporary():
                 lab = weakref.proxy(self._edge_labels[edge_status.edge_label_index])
-                if new_cost < lab.cost:
-                    self._adjacency_list.insert(new_key=sort_cost,
-                                                item=edge_status.edge_label_index)
-                    lab.pred_idx = pred_idx
-                    lab.end_node = end_node
-                    lab.cost = new_cost
+                #   Edge:
+                #             4242   -------------  4141
+                #              start       ->        end
+                #                         or
+                #               end        <-       start
+
+                # the edge may have been visited either from its start or end,
+                # let's find out in this case which one is "cheaper"
+
+                # OK, we are visiting the edge at the same direction of last visit, nothing
+                # to be done
+                if lab.end_node == end_node:
+                    if new_cost < lab.cost:
+                        self._adjacency_list.insert(new_key=sort_cost,
+                                                    item=edge_status.edge_label_index)
+                        lab.pred_idx = pred_idx
+                        lab.end_node = end_node
+                        lab.cost = new_cost
+
+                # Hmmm, we are visiting the edge in the opposing direction of last visit
+                elif lab.end_node == node:
+                    if new_cost.cost < (lab.cost.cost - edge['length']):
+                        self._adjacency_list.insert(new_key=sort_cost,
+                                                    item=edge_status.edge_label_index)
+                        lab.edge_id = EdgeId(node, end_node)
+                        lab.pred_idx = pred_idx
+                        lab.end_node = end_node
+                        lab.cost = new_cost
+
                 continue
 
             idx = len(self._edge_labels)
@@ -168,7 +191,7 @@ class AStar(object):
             current_labels = len(self._edge_labels)
 
             if current_labels > PriorityQueue.QUEUE_MAX_SIZE:
-                return [], -1.
+                return []
 
             _, pred_index = self._adjacency_list.pop()
             pred_edge_label = self._edge_labels[pred_index]
