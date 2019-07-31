@@ -47,10 +47,8 @@ class MultiModalAStart(object):
         backward_bss = bss_route[-1]
 
         forward_walking_route, forward_secs = AStar(speed=WALKING_SPEED).get_best_path(g, orig, forward_bss)
-        print(forward_bss, forward_secs, forward_isochrone.get(forward_bss))
 
         backward_walking_route, backward_secs = AStar(speed=WALKING_SPEED).get_best_path(g, backward_bss, dest)
-        print(backward_bss, backward_secs, backward_isochrone.get(backward_bss))
 
         return (forward_walking_route, bss_route, backward_walking_route), (forward_secs, bike_secs, backward_secs)
 

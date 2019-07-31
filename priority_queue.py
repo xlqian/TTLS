@@ -12,7 +12,7 @@ class _Element(object):
 
 @dataclass
 class PriorityQueue(object):
-    QUEUE_MAX_SIZE = 100000
+    QUEUE_MAX_SIZE = 50000
 
     _data: List = field(default_factory=lambda: np.array([_Element(np.iinfo(np.int32).max, None)] * PriorityQueue.QUEUE_MAX_SIZE, dtype=object))
     _items_key: Dict = field(default_factory=dict)
@@ -25,6 +25,13 @@ class PriorityQueue(object):
             self._data[0:self._data_size-1] = self._data[1:self._data_size]
             del self._items_key[element.item]
             self._data_size -= 1
+            return element.key, element.item
+        return None, None
+
+    def peak(self):
+        # To be optimized with _start and _end
+        if self._data_size > 0:
+            element = self._data[0]
             return element.key, element.item
         return None, None
 
@@ -76,6 +83,9 @@ class PriorityQueue(object):
             if row.start >= self._data_size or row.stop >= self._data_size:
                 raise IndexError('Slice is bigger than the data size: {}'.format(self._data_size))
         return self._data[row]
+
+    def __bool__(self):
+        return bool(len(self))
 
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@ class DoubleAstar(object):
     _speed: float = 1.4
     _threshold: float = float('inf')
 
-    def __init__(self, speed=1.4, cost_factor=0.5):
+    def __init__(self, speed=1.4, cost_factor=1):
         self._speed = speed
         self._cost_factor = cost_factor
 
@@ -47,7 +47,7 @@ class DoubleAstar(object):
         return start_ll.distance_to(end_ll) * self._cost_factor
 
     @staticmethod
-    def _get_edge_status_impl(container: Dict[EdgeId, EdgeStatus], edge_id: EdgeId):
+    def _get_edge_status_impl(container: Dict[EdgeId, EdgeStatus], edge_id: EdgeId) -> EdgeStatus:
         s = container.get(edge_id)
         if not s:
             return container[edge_id].set_unreached()
