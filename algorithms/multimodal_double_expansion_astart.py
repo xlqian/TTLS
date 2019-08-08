@@ -11,7 +11,7 @@ from algorithms import utils
 from algorithms.inner_types import NodeId, EdgeId, Cost, EdgeLabel, EdgeStatus, EdgeLabelIdx
 
 
-kThresholdDelta = 20.
+kThresholdDelta = 50.
 
 WALKING_SPEED = 1.4
 BIKE_SPEED = 3.3
@@ -621,6 +621,7 @@ class MultiModalDoubleExpansionAStar(object):
                          self._edges_status_bike_backward, self._edge_labels_bike_backward,
                          str(i).zfill(4), prefix="double_expansion")
                 i += 1
+                a = 0
             a += 1
 
             if expand_forward:
@@ -638,8 +639,9 @@ class MultiModalDoubleExpansionAStar(object):
                     self._adjacency_list_walking_forward.pop()
                     forward_edge_label = self._edge_labels_walking_forward[walking_forward_edge_label_idx]
 
-                    if forward_edge_label.sort_cost - (walking_diff if walking_diff is not None else 0) > self._threshold:
-                        return self.make_osm_path()
+                    if not all((bss_reached_forward, bss_reached_backward)):
+                        if forward_edge_label.sort_cost - (walking_diff if walking_diff is not None else 0) > self._threshold:
+                            return self.make_osm_path()
 
                     if self._edges_status_walking_backward[forward_edge_label.edge_id].is_permanent():
                         if self._threshold == float('inf'):
@@ -696,8 +698,9 @@ class MultiModalDoubleExpansionAStar(object):
                     self._adjacency_list_walking_backward.pop()
                     backward_edge_label = self._edge_labels_walking_backward[walking_backward_edge_label_idx]
 
-                    if backward_edge_label.sort_cost - (walking_diff if walking_diff is not None else 0) > self._threshold:
-                        return self.make_osm_path()
+                    if not all((bss_reached_forward, bss_reached_backward)):
+                        if backward_edge_label.sort_cost - (walking_diff if walking_diff is not None else 0) > self._threshold:
+                            return self.make_osm_path()
 
                     if self._edges_status_walking_forward[backward_edge_label.edge_id].is_permanent():
                         if self._threshold == float('inf'):
@@ -731,13 +734,22 @@ class MultiModalDoubleExpansionAStar(object):
                     self._adjacency_list_bike_backward.pop()
                     backward_edge_label = self._edge_labels_bike_backward[bike_backward_edge_label_idx]
 
-                    if backward_edge_label.sort_cost + (bike_diff if bike_diff is not None else 0) > self._threshold:
+                    if backward_edge_label.sort_cost - (bike_diff if bike_diff is not None else 0) > self._threshold:
                         return self.make_osm_path()
 
                     if self._edges_status_bike_forward[backward_edge_label.edge_id].is_permanent():
                         if self._threshold == float('inf'):
                             self._threshold = backward_edge_label.sort_cost + kThresholdDelta
                         self.set_backward_bike_connection(backward_edge_label.edge_id)
+
+            if all((bss_reached_forward, bss_reached_backward)):
+                if self._best_path.mode == "walking":
+                    bike_forward_edge_label = self._edge_labels_bike_forward[bike_forward_edge_label_idx]
+                    bike_backward_edge_label = self._edge_labels_bike_backward[bike_backward_edge_label_idx]
+
+                    if self._best_path.cost < (bike_forward_edge_label.cost.cost + bike_backward_edge_label.cost.cost):
+                        expand_walking_forward = expand_walking_backward = True
+                        expand_bike_forward = expand_bike_backward = False
 
             if forward_cost <= backward_cost:
                 expand_forward = True

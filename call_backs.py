@@ -92,20 +92,22 @@ def double_expansion_call_back(g, origin, dest, bss,
     lat_diff = abs(o_lat - d_lat)
     lon_diff = abs(o_lon - d_lon)
 
-    # bbpx = [north, south, east, west]
-    bbox = (max(o_lat, d_lat) + 8 * lat_diff,
-            min(o_lat, d_lat) - 8 * lat_diff,
-            max(o_lon, d_lon) + 1 * lon_diff,
-            min(o_lon, d_lon) - 1 * lon_diff)
+    coeff = lat_diff / lon_diff
+
+    # bbox = [north, south, east, west]
+    bbox = (max(o_lat, d_lat) + 0.2 * lat_diff / coeff,
+            min(o_lat, d_lat) - 0.2 * lat_diff / coeff,
+            max(o_lon, d_lon) + 0.2 * lon_diff,
+            min(o_lon, d_lon) - 0.2 * lon_diff)
 
     dpi = 200
-    fig, ax = osmnx. plot_graph(g, bbox=bbox, fig_height=6,
-                     margin=0.02, bgcolor='w', axis_off=True, show=False,
-                                save=False, close=False, file_format='png', filename='temp',
-                     dpi=dpi, annotate=False, node_color='#999999',
-                     node_size=0, node_alpha=0, node_edgecolor='none',
-                     node_zorder=1, edge_color='#999999', edge_linewidth=1,
-                     edge_alpha=1, use_geom=True)
+    fig, ax = osmnx.plot_graph(g, bbox=bbox, fig_height=6,
+                               margin=0.02, bgcolor='w', axis_off=True, show=False,
+                               save=False, close=False, file_format='png', filename='temp',
+                               dpi=dpi, annotate=False, node_color='#999999',
+                               node_size=0, node_alpha=0, node_edgecolor='none',
+                               node_zorder=1, edge_color='#999999', edge_linewidth=1,
+                               edge_alpha=1, use_geom=True)
 
     origin_destination_lats = (o_lat, d_lat)
     origin_destination_lons = (o_lon, d_lon)
