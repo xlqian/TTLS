@@ -12,7 +12,7 @@ class _Element(object):
 
 @dataclass
 class PriorityQueue(object):
-    QUEUE_MAX_SIZE = 50000
+    QUEUE_MAX_SIZE = 10000
 
     _data: List = field(default_factory=lambda: np.array([_Element(np.iinfo(np.int32).max, None)] * PriorityQueue.QUEUE_MAX_SIZE, dtype=object))
     _items_key: Dict = field(default_factory=dict)

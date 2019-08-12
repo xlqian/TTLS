@@ -16,12 +16,12 @@ class EdgeId(object):
     """
     start: NodeId = field(hash=False, compare=False)
     end: NodeId = field(hash=False, compare=False)
-    key: Tuple[NodeId, NodeId] = field(hash=True, compare=True)
+    can_change_mode: bool = field(hash=True, compare=True, default=True)
+    key: Tuple[NodeId, NodeId] = field(hash=True, compare=True, default=())
 
-    def __init__(self, start, end):
-        object.__setattr__(self, 'start', start)
-        object.__setattr__(self, 'end', end)
-        object.__setattr__(self, 'key', (min(start, end), max(start, end)))
+    def __post_init__(self):
+        object.__setattr__(self, 'key', (min(self.start, self.end),
+                                         max(self.start, self.end)))
 
 
 @dataclass(order=True)
@@ -51,6 +51,7 @@ class EdgeLabel(object):
     is_origin: bool = False
     # for double astar
     is_destination: bool = False
+    can_change_mode: bool = True
 
     def __eq__(self, other):
         return self.edge_id == other.edge_id and self.pred_idx == other.pred_idx
