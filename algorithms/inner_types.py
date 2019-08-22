@@ -7,6 +7,10 @@ NodeId = int
 EdgeLabelIdx = int
 
 
+class TravelMode(Enum):
+    WALKING = 0
+    BIKE = 1
+
 @dataclass(frozen=True)
 class EdgeId(object):
     """
@@ -16,7 +20,7 @@ class EdgeId(object):
     """
     start: NodeId = field(hash=False, compare=False)
     end: NodeId = field(hash=False, compare=False)
-    can_change_mode: bool = field(hash=True, compare=True, default=True)
+    mode: TravelMode = field(hash=True, compare=True, default=TravelMode.WALKING)
     key: Tuple[NodeId, NodeId] = field(hash=True, compare=True, default=())
 
     def __post_init__(self):

@@ -243,3 +243,88 @@ def double_expansion_isochrone_callback(g, origin, dest_nodes, bss,
     file_format = 'png'
     close = True
     osmnx.save_and_show(fig, ax, save, show, close, filename, file_format, dpi, axis_off)
+
+
+def double_expansion_one_queue_callback(g,
+                                        origin, dest, bss,
+                                        edge_status, edge_labels,
+                                        i, prefix="double_expansion_one_queue"):
+    # bbox = [north, south, east, west]
+    o_lat, o_lon = g.nodes[origin]['y'], g.nodes[origin]['x']
+    d_lat, d_lon = g.nodes[dest]['y'], g.nodes[dest]['x']
+    lat_diff = abs(o_lat - d_lat)
+    lon_diff = abs(o_lon - d_lon)
+
+    coeff = lat_diff / lon_diff
+
+    # bbox = [north, south, east, west]
+    bbox = (max(o_lat, d_lat) + 0.8 * lat_diff / coeff,
+            min(o_lat, d_lat) - 0.8 * lat_diff / coeff,
+            max(o_lon, d_lon) + 0.8 * lon_diff,
+            min(o_lon, d_lon) - 0.8 * lon_diff)
+
+    dpi = 200
+    fig, ax = osmnx.plot_graph(g, bbox=bbox, fig_height=6,
+                               margin=0.02, bgcolor='w', axis_off=True, show=False,
+                               save=False, close=False, file_format='png', filename='temp',
+                               dpi=dpi, annotate=False, node_color='#999999',
+                               node_size=0, node_alpha=0, node_edgecolor='none',
+                               node_zorder=1, edge_color='#999999', edge_linewidth=1,
+                               edge_alpha=1, use_geom=True)
+
+    origin_destination_lats = (o_lat, d_lat)
+    origin_destination_lons = (o_lon, d_lon)
+
+    ax.scatter(origin_destination_lons, origin_destination_lats, s=50, c='#c942ff', alpha=1, edgecolor='none', zorder=6)
+
+    bss_lats = []
+    bss_lons = []
+
+    for node in bss:
+        bss_lats.append(g.nodes[node]['y'])
+        bss_lons.append(g.nodes[node]['x'])
+
+    ax.scatter(bss_lons, bss_lats, s=8, c='#0046ff', alpha=1, edgecolor='none', zorder=6)
+
+    walking_nodes = set([edge_labels[status.edge_label_index].end_node
+                         for _, status in edge_status.items()
+                         if edge_labels[status.edge_label_index].edge_id.mode.value == 0])
+
+    walking_lats = []
+    walking_lons = []
+
+    for node in walking_nodes:
+        walking_lats.append(g.nodes[node]['y'])
+        walking_lons.append(g.nodes[node]['x'])
+
+    ax.scatter(walking_lons, walking_lats, s=7, c='#ff1b00', alpha=0.4, edgecolor='none', zorder=3)
+
+    bike_nodes = set([edge_labels[status.edge_label_index].end_node
+                      for _, status in edge_status.items()
+                      if edge_labels[status.edge_label_index].edge_id.mode.value == 1])
+
+    bike_lats = []
+    bike_lons = []
+
+    for node in bike_nodes:
+        bike_lats.append(g.nodes[node]['y'])
+        bike_lons.append(g.nodes[node]['x'])
+
+    ax.scatter(bike_lons, bike_lats, s=6, c='#22ff36', alpha=0.4, edgecolor='none', zorder=4)
+
+    bss_lats = []
+    bss_lons = []
+
+    for node in bss:
+        bss_lats.append(g.nodes[node]['y'])
+        bss_lons.append(g.nodes[node]['x'])
+
+    ax.scatter(bss_lons, bss_lats, s=8, c='#0046ff', alpha=1, edgecolor='none', zorder=6)
+
+    filename = '{}_{}'.format(prefix, i)
+    show = False
+    save = True
+    axis_off = True
+    file_format = 'png'
+    close = True
+    osmnx.save_and_show(fig, ax, save, show, close, filename, file_format, dpi, axis_off)
