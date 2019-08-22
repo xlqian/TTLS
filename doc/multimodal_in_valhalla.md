@@ -105,7 +105,13 @@ def multimodal_A_star(origin, destination):
             expand_forward(current, neighbour, another_mode) 
              
 ``` 
+
+![Point to Point on BSS](../example_images/double_expansion_one_queue_bss.gif?raw=true "Point to Point on BSS")  
+
+![Point to Point on foot](../example_images/double_expansion_one_queue_foot.gif?raw=true "Point to Point on foot")  
           
 * **Isochrone**
 
 The algorithm of isochrone is quite simple, we only need to set heuristic cost to zero, and it's done. 
+
+![Isochrone on BSS](../example_images/double_expansion_isochrone.gif?raw=true "Isochrone on BSS")  
