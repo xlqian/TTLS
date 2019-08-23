@@ -9,7 +9,7 @@ I don't want to be late for my rendezvous</b>
 
 ## Overview 
 
-The algorithm that we introduce in this document can be used in multimodal pathfinding. More particularly, we're going 
+The algorithm that we introduce in this document can be applied in multimodal pathfinding. More particularly, we're going 
 to use Bike Sharing System(BSS) as example. 
 
 In the case of BSS, two scenarios may happen:
@@ -18,28 +18,31 @@ In the case of BSS, two scenarios may happen:
 be able to find a journey on foot
 
 2. The origin and the destination are far away from each other, Valhalla should be able to find a journey on foot 
-leading the user to a BSS station then another journey leading the user to a another BSS station close to the 
-destination in order to put the bike back and finally a journey from the second BSS station to the destination.
+leading the user to a BSS station then another journey by bike leading the user to a another BSS station close to the 
+destination in order to put the bike back and finally a journey, on foot again, from the second BSS station to the 
+destination.
 
 ## Algorithm
 
 The whole Prove of Concept is based on the existing algorithms A*, which is used in Valhalla widely.
 
 To understand the multimodal A*, we can image that we are going to explore a graph that have two different layers 
-which represent **foot layer** and **bike layer** respectively. The BSS stations are the edges that connect those two
-layers and though which the traveller can change the travel mode. With that said, we are actually constructing a larger
-graph by "separating" the nodes and the edges of different modes from the original graph and classic path finding 
-algorithms can work on this larger graph as usual. In the case  of BSS, both origin and destination are located on the 
-"foot" layer.
+which represent **foot layer** and **bike layer** respectively. The BSS stations are the nodes/edges that connect those 
+two layers and through which the traveller can change the travel mode. With that said, we are actually constructing a 
+larger graph by "separating" the nodes and the edges of different modes from the original graph and classic path finding 
+algorithms can work on this larger graph as usual. In the case of BSS, both origin and destination are located on the 
+"foot" layer. Note that this concept works with other multimodal cases too, for example, if a user want to take a bike
+form the BSS station, go somewhere without "putting back" the bike (aka a "via"), we only need to project the 
+destination on the **bike layer**.
  
-The only trick of making the "separation" happen is to add new attribute: `travel_mode` into the `open_set`(see below 
-for more details).
+The only trick of making the "separation" happen is to add new attribute: `travel_mode` into the key of`real_cost`(see 
+below for more details).
  
 * **Nomenclature**
 
   * **pred_map**: predecessor of the current node, used to build the final path
-  * **real_cost**: map of real cost of the journey. In this project, we use the sum of normlized length of the journey.  
-  * **open_set**: a set of nodes to be visited, as classic implementation, we use a priority queue
+  * **real_cost**: map of real cost of the journey, whose keys are `node, travel_mode`, In this project, we use the sum of normlized length of the journey.  
+  * **open_set**: a set of nodes to be visited, as classic implementation, we use a priority queue, who
   * **closed_set**: a set of nodes that has already the optimal solution
   * **normalize_cost**: to be able to accumulate the cost of different modes, we have to normalize the cost. In this 
   project, we use `the length of the edge` * `1` as the cost of foot mode and 
