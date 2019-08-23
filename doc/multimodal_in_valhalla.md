@@ -1,9 +1,11 @@
 # Multimodal Pathfinder in Valhalla
 
-Roses are red,  
-Violets are blue,  
-Valhalla, Find me a BSS,  
-And let's roll
+<p align="center">
+<b>Roses are red,<br>
+Violets are blue,<br>
+Valhalla, Find me a BSS,<br>
+I don't want to be late for my rendezvous</b>
+</p>
 
 ## Overview 
 
@@ -107,7 +109,7 @@ def multimodal_A_star(origin, destination):
 ``` 
 
 Example of a exploration, final result is on BSS
-![Point to Point on BSS](../example_images/double_expansion_one_queue_bss.gif?raw=true "Point to Point on BSS")  
+![Point to Point on BSS](../example_images/double_expansion_one_queue_bss.gif?raw=true)
 
 Example of a exploration, final result is on foot
 ![Point to Point on foot](../example_images/double_expansion_one_queue_foot.gif?raw=true "Point to Point on foot")  
